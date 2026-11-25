@@ -1,0 +1,13 @@
+{
+    "User ID atau PIN salah.": "Incorrect User ID or PIN.",
+    "Berhasil keluar.": "Signed out successfully.",
+    "Nomor rekening harus 6–20 digit angka.": "Account number must be 6–20 digits.",
+    "Nominal tidak valid.": "Invalid amount.",
+    "PIN salah. Coba lagi.": "Incorrect PIN. Please try again.",
+    "Tidak bisa transfer ke rekening sendiri.": "You cannot transfer to your own account.",
+    "Saldo tidak cukup.": "Insufficient balance.",
+    "E-statement tidak ditemukan.": "E-statement not found.",
+    "Arah transaksi tidak valid.": "Invalid transaction direction.",
+    "Nominal harus lebih dari 0.": "Amount must be greater than 0.",
+    "Saldo tidak cukup untuk penarikan ini.": "Insufficient balance for this withdrawal."
+}
