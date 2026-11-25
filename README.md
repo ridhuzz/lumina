@@ -2,6 +2,21 @@
 
 Backend untuk aplikasi Flutter **Lumina** (`../lumina_bank`). Dibangun dengan Laravel 13, Sanctum (token), dan MySQL (MAMP).
 
+## Instalasi dari hasil clone
+
+1. Nyalakan MAMP (Apache + MySQL), lalu buat database **`lumina`** (dan **`lumina_test`** untuk tes), mis. lewat phpMyAdmin.
+2. Di folder proyek (Command Prompt):
+
+   ```bat
+   composer install
+   copy .env.example .env
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan filament:assets
+   ```
+
+`.env.example` sudah memakai MySQL MAMP (`root` / `root`, database `lumina`). Jika password MySQL Anda berbeda, ubah `DB_PASSWORD` di `.env`. Error `could not find driver` berarti `.env` masih memakai `DB_CONNECTION=sqlite`; error `Unknown database 'lumina'` berarti database belum dibuat.
+
 ## Menjalankan
 
 API dilayani langsung oleh **Apache MAMP** di <http://localhost/lumina>, seperti web app lain di `htdocs`. Selama MAMP menyala (Apache + MySQL), API ikut hidup; tidak perlu menjalankan perintah apa pun.
