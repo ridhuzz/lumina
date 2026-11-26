@@ -14,7 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Pesan API ikut bahasa aplikasi (header Accept-Language).
+        // Token cadangan X-Authorization bila server membuang header Authorization.
         $middleware->api(prepend: [
+            \App\Http\Middleware\RestoreAuthorizationHeader::class,
             \App\Http\Middleware\SetLocaleFromHeader::class,
         ]);
     })
