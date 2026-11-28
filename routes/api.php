@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AppConfigController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\Api\HomeWidgetsController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\TransferController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/accounts/me', [AccountController::class, 'me']);
     Route::get('/payees', [AccountController::class, 'payees']);
     Route::get('/transactions', [AccountController::class, 'transactions']);
+
+    // Widget beranda & cek penerima (dipakai aplikasi Kiki).
+    Route::get('/menu', [HomeWidgetsController::class, 'menu']);
+    Route::get('/rates', [HomeWidgetsController::class, 'rates']);
+    Route::get('/cashflow', [HomeWidgetsController::class, 'cashflow']);
+    Route::post('/transfer/inquiry', [HomeWidgetsController::class, 'inquiry'])->middleware('throttle:30,1');
 
     Route::get('/statements', [StatementController::class, 'index']);
     Route::get('/statements/{id}/file', [StatementController::class, 'file'])->whereNumber('id');

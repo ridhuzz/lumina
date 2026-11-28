@@ -67,6 +67,7 @@ Menu di sidebar: **Dashboard**, **Nasabah**, dan **Banner**. Semua data dibuka p
 | Tab e-Statement | Rekening koran PDF per periode (bulan/tahun). **Sumber**: *Buat dari mutasi* (PDF dibuat otomatis, bisa banyak halaman) atau *Unggah file PDF* (lampiran wajib, maks. 10 MB). Saat mengunggah PDF ada centang **Isi mutasi otomatis dari PDF ini**: baris transaksi di PDF dibaca (`app/Support/StatementParser.php`) dan ditambahkan ke tab Mutasi; hanya periode yang dipilih, mutasi yang sudah ada dilewati, saldo tidak berubah. PDF hasil scan/gambar tidak bisa dibaca. Satu PDF per periode; periode masa depan ditolak. Bisa dilihat, diganti/diperbarui, atau dihapus. File disimpan privat di `storage/app/private/statements`. |
 | Tab Penerima tersimpan | Daftar penerima transfer cepat nasabah. |
 | Banner | Banner promo aplikasi untuk **halaman login** (sebelum masuk, 1200×500 px) dan **beranda** (1200×240 px). Unggah gambar, tautan opsional, periode tayang opsional, aktif/nonaktif, urutan diatur dengan seret. Aplikasi mengambilnya dari `GET /api/banners?placement=welcome|home` (publik); bila kosong, aplikasi memakai banner bawaan. Banner contoh: `php artisan db:seed --class=BannerSeeder`. |
+| Modul Menu | Isi **Menu Utama** di beranda aplikasi: **ID modul** (mis. `transfer`), **nama modul**, **ikon** (pilih dari daftar), label kecil opsional (mis. BARU), **aktif/nonaktif**, urutan diatur dengan seret. Modul nonaktif tetap tampil di aplikasi, tetapi tidak bisa dibuka. Modul aktif terbuka bila aplikasi punya halamannya (saat ini `transfer`, `history`, `qris`). 12 modul awal ikut dibuat oleh migrasi. |
 | Identitas Aplikasi | **Nama aplikasi** (mis. "Lumina"), **nama perusahaan**, dan **logo** (opsional, persegi 512×512 px, maks. 1 MB). Dipakai aplikasi mobile (judul, halaman login, beranda, "… ID", "Kartu …", dsb.), nama panel admin, dan e-statement PDF. Nama aplikasi juga menjadi **nama bank internal** untuk transfer sesama; saat diganti, penerima tersimpan ikut berganti. Satu kode bisa dipakai banyak perusahaan: tiap server punya identitasnya sendiri, dan aplikasi mengikuti server yang dituju. Teks di dalam gambar banner tidak ikut berganti; ganti lewat menu Banner. |
 
 - Hanya user dengan `is_admin = true` yang bisa masuk panel. Akun admin tidak bisa login di aplikasi, dan nasabah tidak bisa masuk panel.
@@ -96,7 +97,11 @@ Semua endpoint berawalan `/api`. Selain login dan health, wajib header `Authoriz
 | GET | `/transactions` | Mutasi terbaru (maks. 100) |
 | GET | `/statements` | Daftar e-statement milik nasabah (terbaru dulu) |
 | GET | `/statements/{id}/file` | PDF e-statement; milik orang lain → 404 |
-| POST | `/transfers` | `{payee_name, bank, number, amount, note?, pin}` → 201 + transaksi |
+| POST | `/transfers` | `{payee_name, bank, number, amount, note?, pin}` → 201 + transaksi + `fee`. Ke bank lain kena biaya Rp2.500 (dicatat sebagai transaksi "Biaya Transfer Antarbank"); sesama bank gratis |
+| POST | `/transfer/inquiry` | `{bank, number}` → `{beneficiary_name}`. Sesama bank: rekening harus ada (404) dan bukan milik sendiri (422). Dibatasi 30x/menit |
+| GET | `/menu` | Modul "Menu Utama" beranda, urut sesuai admin: `[{id, label, icon, badge, active}]`. `active=false` = tampil tapi tidak bisa dibuka |
+| GET | `/rates` | Kurs mata uang (data statis untuk demo) |
+| GET | `/cashflow` | Pemasukan & pengeluaran bulan ini per kategori |
 
 Error dikembalikan sebagai `{message: "..."}`: `401` (belum login / PIN login salah), `422` (PIN transfer salah, saldo tidak cukup, data tidak valid), `429` (terlalu banyak percobaan).
 

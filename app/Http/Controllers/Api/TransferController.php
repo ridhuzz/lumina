@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Hash;
 
 class TransferController extends Controller
 {
+    /** Biaya transfer ke bank lain (sesama bank gratis). */
+    public const EXTERNAL_FEE = '2500.00';
+
     /**
      * POST /api/transfers
      * Body: { payee_name, bank, number, amount, note?, pin }
@@ -46,12 +49,13 @@ class TransferController extends Controller
         // Bank internal = nama aplikasi (menu Identitas Aplikasi): transfer ke bank ini
         // langsung mengkredit rekening tujuan.
         $internal = $data['bank'] === Setting::appName();
+        $fee = $internal ? '0.00' : self::EXTERNAL_FEE;
 
         if ($internal && $data['number'] === $sender->number) {
             return response()->json(['message' => __('Tidak bisa transfer ke rekening sendiri.')], 422);
         }
 
-        $result = DB::transaction(function () use ($sender, $user, $data, $amount, $internal) {
+        $result = DB::transaction(function () use ($sender, $user, $data, $amount, $fee, $internal) {
             // Rekening tujuan internal (bila ada) ikut dikunci. Urutan kunci berdasarkan id
             // supaya dua transfer berlawanan arah tidak saling menunggu (deadlock).
             $receiverId = $internal
@@ -64,11 +68,13 @@ class TransferController extends Controller
 
             $from = $locked[$sender->id];
 
-            if (bccomp((string) $from->balance, $amount, 2) < 0) {
-                return null; // saldo tidak cukup
+            $total = bcadd($amount, $fee, 2);
+
+            if (bccomp((string) $from->balance, $total, 2) < 0) {
+                return null; // saldo tidak cukup (nominal + biaya)
             }
 
-            $from->balance = bcsub((string) $from->balance, $amount, 2);
+            $from->balance = bcsub((string) $from->balance, $total, 2);
             $from->save();
 
             $now = now();
@@ -81,6 +87,18 @@ class TransferController extends Controller
                 'note' => $data['note'] ?? null,
                 'occurred_at' => $now,
             ]);
+
+            if (bccomp($fee, '0', 2) > 0) {
+                $from->transactions()->create([
+                    'ref' => Transaction::newRef(),
+                    'title' => 'Biaya Transfer Antarbank',
+                    'category' => 'Biaya',
+                    'amount' => $fee,
+                    'direction' => 'out',
+                    'note' => $data['payee_name'],
+                    'occurred_at' => $now,
+                ]);
+            }
 
             if ($receiverId) {
                 $to = $locked[$receiverId];
@@ -105,6 +123,9 @@ class TransferController extends Controller
             return response()->json(['message' => __('Saldo tidak cukup.')], 422);
         }
 
-        return (new TransactionResource($result))->response()->setStatusCode(201);
+        return (new TransactionResource($result))
+            ->additional(['fee' => (float) $fee])
+            ->response()
+            ->setStatusCode(201);
     }
 }
